@@ -5,23 +5,29 @@ using UnityEngine;
 public class LaserBurst : Ammo
 {
     string ammoName = "Laser Burst";
-    Vector3 _origin;
     public override string GetAmmoName()
     {
         return ammoName;
     }
     public void Start()
     {
-        _origin = transform.position;
+        StartCoroutine(ApplyVelocity());
     }
-    public void Update()
+    IEnumerator ApplyVelocity()
     {
-        float offset = transform.position.z;
-        transform.Translate(Vector3.forward * 50, Space.Self);
-        if ((transform.position + _origin).magnitude > 1000)
+        yield return new WaitForEndOfFrame();
+        if (Impact != Vector3.zero)
         {
-            Destroy(this.gameObject);
+            transform.position = Impact;
         }
+        else
+        {
+            transform.position += (transform.forward * Range);
+        }
+        yield return new WaitForSeconds(0.1f);
+        Destroy(gameObject);
+
     }
+       
 
 }

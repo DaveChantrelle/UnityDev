@@ -7,7 +7,7 @@ public class CamController : MonoBehaviour
 {
     Player P;
     [SerializeField]
-    float camOffset = 250f;
+    float camOffset = 300f;
     Vector3 _targetPos;
     // Start is called before the first frame update
     void Start()

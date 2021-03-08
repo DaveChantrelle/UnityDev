@@ -2,6 +2,7 @@
 /// <summary>
 /// Base class for all fireable weapons
 /// </summary>
+/// TODO: Reloading / recharging. Damage via Raycast hit and IDamagable interface on target.
 public abstract class Weapon : MonoBehaviour
 {
     //Declarations
@@ -48,8 +49,10 @@ public abstract class Weapon : MonoBehaviour
     public virtual float MuzzleVelocity { get => _muzzleVelocity; set => _muzzleVelocity = value; }
     public virtual float Firerate { get => _firerate; set => _firerate = value; }
     public virtual float Range { get => _range; set => _range = value; }
+    public virtual float Damage { get => _damage; set => _damage = value; }
     //Updaters
     public virtual int UpdateAmmoCapacity(int _modifiedCapacity = 0) { return _ammoCapacity = _baseCapacity + _modifiedCapacity; }
+    public virtual int UpdateAmmoCount(int _modifiedCount = 0) { return _ammoCount += _modifiedCount; }
     public virtual float UpdateFirerate(float _modifiedFirerate = 0) { return _firerate = _baseFirerate + _modifiedFirerate; }
     public virtual float UpdateRange(float _modifiedRange = 0) { return _range = _baseRange + _modifiedRange; }
     public virtual float UpdateDamage(float _modifiedDamage = 0) { return _damage = _baseDamage + _modifiedDamage; }
@@ -61,7 +64,7 @@ public abstract class Weapon : MonoBehaviour
         BaseFirerate = f;
         BaseDamage = d;
         GetMuzzleVelocity();
-        UpdateAmmoCapacity();
+        UpdateAmmoCount(UpdateAmmoCapacity());
         UpdateDamage();
         UpdateFirerate();
         UpdateRange();

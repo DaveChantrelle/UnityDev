@@ -1,16 +1,19 @@
 using System.Collections;
 using UnityEngine;
 /// <summary>
-/// This handles the movement controls of the currently used ship.
-/// It is attached to the ship prefab and set up in the editor.
-/// It is planned to have a player controller that will handle any currently used ship. 
+/// This handles the movement of a vehicle.
+/// It is attached to the vehicle prefab and set up in the editor.
+/// TODO:
+/// - Pilot Skill level / Modules intergration: (feature) / (upgrade) unlocks affecting movement
+/// - Boosting to (feature): rework with recharging and to fit with warp jumps
+/// - Inertial Dampening Thrusters (feature)
+/// - Target Orientated Rotation (feature)
 /// </summary>
+
 public class VehicleController : MonoBehaviour
 {
-    Player P;
     Rigidbody Rb;
     ModuleManager Mm;
-    HardpointManager Hm;
     InputManager Im;
     /*Ship stats*/
     string VehicleName;
@@ -18,13 +21,13 @@ public class VehicleController : MonoBehaviour
     float shipMass = 5f;
     /*Movement Stats*/
     [SerializeField]
-    float thrustForce = 20f;
+    float thrustForce = 100f;
     [SerializeField]
     float maxSpeed = 100f;
     [SerializeField]
-    float rotationSpeed = 0.5f;
+    float rotationSpeed = 30f;
     float boostSpeed = 50f;
-    float boostThrust = 20f;
+    float boostThrust = 50f;
     [SerializeField]
     float boostFuelLevel = 10f;
     /*Utility vars*/
@@ -40,11 +43,9 @@ public class VehicleController : MonoBehaviour
 
     void Start()
     {
-        P = GetComponentInParent<Player>();
         Im = GetComponentInParent<InputManager>();
         Rb = GetComponent<Rigidbody>();
         Mm = GetComponent<ModuleManager>();
-        Hm = GetComponent<HardpointManager>();
 
     }
     
@@ -67,17 +68,20 @@ public class VehicleController : MonoBehaviour
             //Debug.DrawRay(this.transform.position, - Rb.velocity);
 
             // Set step size to a rotation speed times frame time.
-            float _singleStep = Im.Reverse() * (10*rotationSpeed) * Time.deltaTime;
+            float _singleStep = Im.Reverse() * 0.1f * rotationSpeed * Time.deltaTime;
             
             // Rotate the up vector towards the target direction by one step
             Vector3 _direction = Vector3.RotateTowards(transform.up, -Rb.velocity, _singleStep, 0f);
+            
             //zero out the z value
             _direction.z = 0;
 
             // set the transform look rotation
             transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
+
+
             //if reverse is activated and speed falls below parking speed (10% of maxspeed), reduce speed to 0
-            if(currentSpeed < (maxSpeed * 0.1f))
+            if (currentSpeed < (maxSpeed * 0.2f))
             {
                 Rb.velocity = Vector3.zero;
             }
@@ -107,12 +111,16 @@ public class VehicleController : MonoBehaviour
 
         /*Rotation*/
         //get the requested rotation
-        float _rotation = -Im.Rotation() * rotationSpeed;
+        float _rotation = -Im.Rotation() * (5 * rotationSpeed) * Time.deltaTime;
         //apply the rotation if not Boosting
         if (!Im.Boost())
         {
             this.transform.Rotate(0, 0, _rotation);
+            
         }
+        //Reset any collision issues
+        transform.localEulerAngles = new Vector3(0, 0, transform.eulerAngles.z);
+        transform.position = new Vector3(transform.position.x, transform.position.y, 0);
     }
     //Boosting Coroutine
     IEnumerator BoostedThrust()

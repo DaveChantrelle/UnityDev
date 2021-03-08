@@ -72,7 +72,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 0.1
+  m_Time: 0.05
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -132,7 +132,7 @@ TrailRenderer:
     numCornerVertices: 0
     numCapVertices: 3
     alignment: 0
-    textureMode: 1
+    textureMode: 0
     shadowBias: 0.5
     generateLightingData: 0
   m_MinVertexDistance: 0.1
@@ -148,7 +148,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1766439678565252724}
   - component: {fileID: 6933580056663849191}
-  - component: {fileID: -1164733385610393450}
   m_Layer: 0
   m_Name: LaserBurst
   m_TagString: Untagged
@@ -183,17 +182,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ed8dd9b3a6811146ac533771a2cf895, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!136 &-1164733385610393450
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1766439678565252725}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 1000
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}

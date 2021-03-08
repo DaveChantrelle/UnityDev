@@ -25,8 +25,4 @@ public class AmmoDatabase : ScriptableObject
     {
         return _ammoDict.TryGetValue(name, out Ammo w) ? w : null;
     }
-    public void Awake()
-    {
-
-    }
 }
