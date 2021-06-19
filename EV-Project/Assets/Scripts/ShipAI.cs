@@ -86,7 +86,7 @@ public class ShipAI : MonoBehaviour
         //Set a small amount of deviation on the move target
         if((transform.position - _target).magnitude > dvV.magnitude)
         {
-            //While the AI is distant from target pos, set deviation on target
+            //While the AI is distant from target pos, calculate deviation on target
             currentTarget = _target + (2*dvV);
         }
         else
