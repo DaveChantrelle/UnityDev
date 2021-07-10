@@ -18,7 +18,7 @@ public class CamController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //TODO: Make the getcomponent call happen on awake and then only again when vehilce changes.
+        //TODO: Make the getcomponent call happen on awake and then only again when vehicle changes.
         //--Still error check before assigning
         if (P.GetComponentInChildren<VehicleController>() != null)
         {

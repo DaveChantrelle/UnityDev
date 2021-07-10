@@ -19,6 +19,7 @@ public class TrainingDummyManager : MonoBehaviour
     }
     IEnumerator SpawnTrainingWave()
     {
+        yield return new WaitForSeconds(3);
         GameObject d;
         bool DisNull()
         {

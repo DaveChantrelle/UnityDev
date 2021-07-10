@@ -28,9 +28,9 @@ public class ShipAI : MonoBehaviour
     /*Utility vars*/
     float boostFuelAdjustRate = 0.1f;
     float maxSpeedAdjustRate = 0.05f;
-    float targetDeviation = 100f;
-    Vector3 dvV;
-    Vector3 currentTarget;
+    float targetDeviation = 50f;
+    Vector3 dvV = Vector3.zero;
+    Transform currentTarget;
     /*Movement state vars*/
     [SerializeField]
     float currentSpeed;
@@ -61,9 +61,9 @@ public class ShipAI : MonoBehaviour
     // Communicate / Attack / Warp / Scan / Move / Idle / Transfer / Repair
     public void Start()
     {
-        Vc = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<VehicleController>();
+        //currentTarget = GameObject.FindGameObjectWithTag("Player").transform;
         Rb = GetComponent<Rigidbody>();
-        Debug.Log(Vc + "Found");
+        Debug.Log(currentTarget + "Found");
         transform.LookAt(Vector3.zero);
         dvV = (Random.insideUnitCircle * targetDeviation);
 
@@ -71,34 +71,57 @@ public class ShipAI : MonoBehaviour
     public void Update()
     {
         //TEST: MoveTo(<player>)
-        _moveTarget = Vc.transform.position; 
-        MoveTo(_moveTarget);
+        currentTarget = GameObject.FindGameObjectWithTag("Player").transform;
+        Debug.Log(currentTarget);
+        Debug.DrawLine(transform.position, currentTarget.position, Color.yellow);
+        Vector3 currentTargetPos = currentTarget.position;
+        Debug.DrawLine(transform.position, currentTargetPos, Color.blue);
+        MoveToward(currentTargetPos);
     }
 
     void UpdateAwareness(Awareness _forcedAwareness = 0)
     {
 
     }
-
-    //Base Actions
-    void MoveTo(Vector3 _target)
+    void Seek(Vector3 _target)
     {
-        //Set a small amount of deviation on the move target
-        if((transform.position - _target).magnitude > dvV.magnitude)
+
+    }
+    Vector3 TargetDeviation(Vector3 target, Vector3 deviationDir, float deviationMag)
+    {
+        
+        Vector3 new_trgt;
+        //Set a small amount of deviation to a target
+        if ((transform.position - target).magnitude > 4*deviationMag)
         {
             //While the AI is distant from target pos, calculate deviation on target
-            currentTarget = _target + (2*dvV);
+            new_trgt = target + (4 * deviationDir);
         }
         else
         {
             //As it gets closer, the heading gets accurate to ensure precise location arrival
-            currentTarget = _target;
+            new_trgt = target;
             //Setting a new deviation here will not stutter the ships rotation as its not used this close
-            dvV = (Random.insideUnitCircle * targetDeviation);
+            dvV = (Random.insideUnitCircle * deviationMag);
         }
+
+        return new_trgt;
+    }
+    Vector3 GetAdjustedTargetVector(Transform t, Vector3 desiredTarget, Vector3 currentVelocity)
+    {
         
+        Vector3 _adjustedTargetVector = (desiredTarget - t.position) - currentVelocity;
+
+        return _adjustedTargetVector;
+    }
+    //Base Actions
+    void MoveToward(Vector3 _target)
+    {
+        Vector3 _moveTarget = TargetDeviation(_target, dvV, targetDeviation);
+        Debug.DrawLine(transform.position, _moveTarget, Color.red);
         //Get the heading of the move
-        Vector3 _heading = (currentTarget - transform.position).normalized;
+        Vector3 _heading = GetAdjustedTargetVector(transform, _moveTarget, Rb.velocity);
+        //Debug.DrawLine(transform.position, _heading, Color.green);
 
         //Calculate the rotation toward the heading per frame
         float _singleStep = 5 * rotationSpeed * Time.deltaTime;
@@ -107,9 +130,9 @@ public class ShipAI : MonoBehaviour
         _direction.z = 0;
 
         //Course adjust logic
-        if(Vector3.Dot(Rb.velocity.normalized, _heading) < -0.9)
+        /*if(Vector3.Dot(Rb.velocity.normalized, _heading) < -0.9)
         {
-            //If the velocity and heading are close to opposite adjust the course by a single step to let the RotateToward function to work.
+            //If the velocity and heading are close to opposite adjust the course by a fraction of a single step to let the RotateToward function to work.
             transform.Rotate(0, 0, _singleStep);
         }
         if (Vector3.Dot(Rb.velocity.normalized, _heading) < 0.7 && currentSpeed > 5)
@@ -133,24 +156,29 @@ public class ShipAI : MonoBehaviour
             }
             
             //If the heading is behind the Ship set a new heading for 180 degrees, only when the distance is 100m or more
-            if(180 - Vector3.Angle(Rb.velocity, _heading) < 5 || (Vector3.Distance(_target, transform.position) > 100f))
+            if(180f - Vector3.Angle(Rb.velocity, _heading) < 3f || (Vector3.Distance(_target, transform.position) > 100f))
             {
-                calcDir = new Vector3(-Rb.velocity.x, -Rb.velocity.y, 0);
+                calcDir = new Vector3(-Rb.velocity.x, -Rb.velocity.y, 0f);
                 Debug.Log("Target distance is " + Vector3.Distance(_target, transform.position) + " " + Time.time );
             }
             //Calulate the new step rotation and apply it
             Vector3 _adjDir = Vector3.RotateTowards(transform.up, calcDir, _singleStep, 0f);
+
             transform.rotation = Quaternion.LookRotation(Vector3.forward, _adjDir);
         }
         else
         {
             //Use the original direction if the ship is already on target
             transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
-        }
+        }*/
+        transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
         //Get the thrust acceleration by using the thrustForce stat and the ship mass. Allows for cargo to affect the thruster performance
         float _thrust = thrustForce / shipMass;
         float d = Vector3.Distance(_target, transform.position);
-        if(d > 50f)
+        //Rb.AddRelativeForce(new Vector3(0, _thrust, 0));
+        
+
+        if (d > 50f)
         {
             //Add thrust when further than 50m
             Rb.AddRelativeForce(new Vector3(0, _thrust, 0));
@@ -166,7 +194,7 @@ public class ShipAI : MonoBehaviour
             }
             
         }
-        
+
         //Again for simplicity we cap the speed at maxspeed artificially   
         if (currentSpeed > maxSpeed)
         {
@@ -177,32 +205,5 @@ public class ShipAI : MonoBehaviour
         currentSpeed = Rb.velocity.magnitude;
  
     }
-    void Idle()
-    {
-
-    }
-    void Attack(GameObject _target)
-    {
-
-    }
-    void Scan()
-    {
-
-    }
-    void Communicate(GameObject _target, string _message)
-    {
-
-    }
-    void Warp()
-    {
-
-    }
-    void Transfer()
-    {
-
-    }
-    void Repair()
-    {
-
-    }
+    
 }

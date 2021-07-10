@@ -30,6 +30,7 @@ public class VehicleController : MonoBehaviour
     float boostThrust = 50f;
     [SerializeField]
     float boostFuelLevel = 10f;
+    float boostFuelMax = 10f;
     /*Utility vars*/
     float boostFuelAdjustRate = 0.1f;
     float maxSpeedAdjustRate = 0.05f;
@@ -48,31 +49,33 @@ public class VehicleController : MonoBehaviour
         Mm = GetComponent<ModuleManager>();
 
     }
-    
+
     void Update()
     {
         ShipMovement();
+        
+        Debug.DrawRay(this.transform.position, Rb.velocity);
     }
     void FixedUpdate()
     {
-        
+
     }
     /*ShipMovement*/
     #region ShipMovement
     void ShipMovement()
     {
         /*Reverse Heading*/
-        if(Im.Reverse() > 0 )
+        if (Im.Reverse() > 0)
         {
             //Check alignment of reverse heading in editor
             //Debug.DrawRay(this.transform.position, - Rb.velocity);
 
             // Set step size to a rotation speed times frame time.
             float _singleStep = Im.Reverse() * 0.1f * rotationSpeed * Time.deltaTime;
-            
+
             // Rotate the up vector towards the target direction by one step
             Vector3 _direction = Vector3.RotateTowards(transform.up, -Rb.velocity, _singleStep, 0f);
-            
+
             //zero out the z value
             _direction.z = 0;
 
@@ -102,7 +105,7 @@ public class VehicleController : MonoBehaviour
         if (currentSpeed > maxSpeed)
         {
             //store the velocity as a vector with a magnatude of 1
-            Vector3 _normVelocity = Rb.velocity.normalized; 
+            Vector3 _normVelocity = Rb.velocity.normalized;
             //set that vector to maxspeed limit
             Rb.velocity = _normVelocity * maxSpeed;
         }
@@ -116,51 +119,63 @@ public class VehicleController : MonoBehaviour
         if (!Im.Boost())
         {
             this.transform.Rotate(0, 0, _rotation);
-            
+
         }
         //Reset any collision issues
         transform.localEulerAngles = new Vector3(0, 0, transform.eulerAngles.z);
         transform.position = new Vector3(transform.position.x, transform.position.y, 0);
+
+        //Recharge Boostfuel
+        boostFuelLevel = BoostRecharge();
     }
     //Boosting Coroutine
     IEnumerator BoostedThrust()
     {
-       
-            //store the speed and thrust
-            float _s = maxSpeed;
-            float _t = thrustForce;
-            //Apply the boost values
-            maxSpeed += boostSpeed;
-            thrustForce += boostThrust;
-            isBoosting = true;
 
-            //Keep boosting for duration of input and fuel level
-            while (Im.Boost() && hasBoost)
+        //store the speed and thrust
+        float _s = maxSpeed;
+        float _t = thrustForce;
+        //Apply the boost values
+        maxSpeed += boostSpeed;
+        thrustForce += boostThrust;
+        isBoosting = true;
+
+        //Keep boosting for duration of input and fuel level
+        while (Im.Boost() && hasBoost)
+        {
+
+            //This loop should contain a yield WaitForSeconds statement to allow incremental adjustment of fuel level
+            yield return new WaitForSeconds(0.1f);
+            boostFuelLevel -= boostFuelAdjustRate;
+            if (boostFuelLevel <= 0)
             {
-
-                //This loop should contain a yield WaitForSeconds statement to allow incremental adjustment of fuel level
-                yield return new WaitForSeconds(0.1f);
-                boostFuelLevel -= boostFuelAdjustRate;
-                if (boostFuelLevel <= 0)
-                {
-                    hasBoost = false;
-                    boostFuelLevel = 0;
-                }
+                hasBoost = false;
+                boostFuelLevel = 0;
             }
-            //apply base values when boost is finished
-            thrustForce = _t;
-            //reduce maxSpeed over time
-            while (maxSpeed > _s)
-            {
-                yield return maxSpeed -= maxSpeedAdjustRate;
+        }
+        //apply base values when boost is finished
+        thrustForce = _t;
+        //reduce maxSpeed over time
+        while (maxSpeed > _s)
+        {
+            yield return maxSpeed -= maxSpeedAdjustRate;
 
-            }
-            maxSpeed = _s;
-            isBoosting = false;
-        
+        }
+        maxSpeed = _s;
+        isBoosting = false;
+
+    }
+    float BoostRecharge()
+    {
+        //Boost recharge
+        if (boostFuelLevel < boostFuelMax && !isBoosting)
+        {
+            boostFuelLevel += 0.5f * boostFuelAdjustRate;
+        }
+        return boostFuelLevel;
     }
     //**END ShipMovement**//
     #endregion
-    
+
 }
 

@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        IM = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<InputManager>();
+        IM = GameObject.FindGameObjectWithTag("Player").GetComponentInParent<InputManager>();
     }
 
     // Update is called once per frame

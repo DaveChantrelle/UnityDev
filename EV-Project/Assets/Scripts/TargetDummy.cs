@@ -18,28 +18,7 @@ public class TargetDummy : MonoBehaviour, IDamagable
     // Update is called once per frame
     void Update()
     {
-        /*//transform.LookAt(_target.transform);
-        // Set step size to a rotation speed times frame time.
-        float _singleStep = 100 * Time.deltaTime;
-
-        // Rotate the up vector towards the target direction by one step
-        Vector3 _direction = Vector3.RotateTowards(transform.up, (_target.transform.position - transform.position).normalized, _singleStep, 0f);
-
-        //zero out the z value
-        _direction.z = 0;
-
-        // set the transform look rotation
-        transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
-        // move to target
-        if(Vector3.Distance(transform.position,_target.transform.position)> _targetOffset)
-        {
-            transform.Translate(Vector3.up * _speed * Time.deltaTime);
-        }
-        Vector3 tp = transform.position;
-        transform.position = new Vector3(tp.x, tp.y, 0);
-        transform.localEulerAngles = new Vector3(0, 0, transform.eulerAngles.z);
-        
-        */
+       
         if (_health <= 0)
         {
             Destroy(gameObject);
