@@ -15,30 +15,24 @@ public class ShipAI : MonoBehaviour
     string VehicleModel;
     float shipMass = 5f;
     /*Movement Stats*/
-    [SerializeField]
-    float thrustForce = 100f;
-    [SerializeField]
+    float thrustForce = 150f;
     float maxSpeed = 50f;
-    [SerializeField]
-    float rotationSpeed = 0.3f;
+    float rotationSpeed = 2f;
     float boostSpeed = 50f;
     float boostThrust = 20f;
-    [SerializeField]
     float boostFuelLevel = 10f;
     /*Utility vars*/
     float boostFuelAdjustRate = 0.1f;
     float maxSpeedAdjustRate = 0.05f;
-    float targetDeviation = 50f;
+    float targetDeviation = 100f;
     Vector3 dvV = Vector3.zero;
     Transform currentTarget;
+    Vector3 adjTarget;
     /*Movement state vars*/
     [SerializeField]
     float currentSpeed;
     bool isBoosting = false;
     bool hasBoost = true;
-
-    float _lastMove = 0;
-    Vector3 _moveTarget;
     /*Module Stats*/
 
     //Set up the states for the state machine
@@ -61,149 +55,140 @@ public class ShipAI : MonoBehaviour
     // Communicate / Attack / Warp / Scan / Move / Idle / Transfer / Repair
     public void Start()
     {
-        //currentTarget = GameObject.FindGameObjectWithTag("Player").transform;
+        currentTarget = GameObject.FindGameObjectWithTag("Player").transform;
         Rb = GetComponent<Rigidbody>();
         Debug.Log(currentTarget + "Found");
         transform.LookAt(Vector3.zero);
-        dvV = (Random.insideUnitCircle * targetDeviation);
+        dvV = (Random.insideUnitCircle);
+        gameObject.tag = "Vehicle";
 
     }
     public void Update()
     {
         //TEST: MoveTo(<player>)
-        currentTarget = GameObject.FindGameObjectWithTag("Player").transform;
-        Debug.Log(currentTarget);
-        Debug.DrawLine(transform.position, currentTarget.position, Color.yellow);
-        Vector3 currentTargetPos = currentTarget.position;
-        Debug.DrawLine(transform.position, currentTargetPos, Color.blue);
-        MoveToward(currentTargetPos);
+        
+        Vector3 dir;
+        dir = MoveToward(currentTarget.position);
+        //Vector3 _evadeTarget = TargetDeviation(currentTarget.position, dvV, targetDeviation);
+        GameObject[] vehicles = GameObject.FindGameObjectsWithTag("Vehicle");
+        if(vehicles.Length > 0)
+        {
+            foreach (GameObject v in vehicles)
+            {
+                if (Vector3.Distance(transform.position, v.transform.position) < 50f)
+                {
+                    if(v != gameObject)
+                    {
+                        dir = Evade(v.transform.position);
+                    }
+                    
+
+
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No Vehicles found");
+        }
+        if (Vector3.Distance(transform.position, currentTarget.position) < 50f)
+        {
+            
+            dir = Evade(currentTarget.position);
+
+
+        }
+        
+        
+        transform.rotation = Quaternion.LookRotation(Vector3.forward, dir);
+        ApplyThrust(thrustForce);
+        Debug.DrawRay(transform.position, Rb.velocity, Color.blue);
     }
-
-    void UpdateAwareness(Awareness _forcedAwareness = 0)
+    Vector3 Evade(Vector3 _target)
     {
+        //_target = TargetDeviation(_target, dvV, targetDeviation);
+        //Get the heading of the move
+        Vector3 _heading = GetEvadeTargetVector(transform, _target, Rb.velocity);
+        //Calculate the rotation toward the heading per frame
+        float _singleStep = rotationSpeed * Time.deltaTime;
+        //transform.Rotate(0, 0, _singleStep);
+        Vector3 _direction = Vector3.RotateTowards(transform.up, _heading, _singleStep, 0f);
+        //Zero out the direction as a precaution
+        _direction.z = 0;
 
+        Debug.DrawLine(transform.position, _target, Color.black);
+        Debug.DrawRay(transform.position, _heading, Color.yellow);
+        return _direction;
     }
-    void Seek(Vector3 _target)
+    
+    Vector3 GetAdjustedTargetVector(Transform t, Vector3 desiredTarget, Vector3 currentVelocity)
     {
+        Vector3 _adjustedTargetVector = (desiredTarget - t.position) - currentVelocity;
+        return _adjustedTargetVector;
+    }
+    Vector3 GetEvadeTargetVector(Transform t, Vector3 desiredTarget, Vector3 currentVelocity)
+    {
+        Vector3 _adjustedTargetVector = -(desiredTarget - t.position) - currentVelocity;
+        return _adjustedTargetVector;
+    }
+    //Base Actions
+    Vector3 MoveToward(Vector3 _target)
+    {
+        
+        //Vector3 _moveTarget = TargetDeviation(_target, dvV, targetDeviation);
+        //Get the heading of the move
+        Vector3 _heading = GetAdjustedTargetVector(transform, _target, Rb.velocity);
+        //Calculate the rotation toward the heading per frame
+        float _singleStep = rotationSpeed * Time.deltaTime;
+        float dot = Vector3.Dot(Rb.velocity.normalized, _heading.normalized);
+        if (dot < -0.9f)
+        {
+            transform.Rotate(0, 0, _singleStep);
+        }
+        Vector3 _direction = Vector3.RotateTowards(transform.up, _heading, _singleStep, 0f);
+        //Zero out the direction as a precaution
+        _direction.z = 0;
 
+        Debug.DrawLine(transform.position, _target, Color.red);
+        Debug.DrawRay(transform.position, _heading, Color.green);
+        return _direction;
+    }
+    void ApplyThrust(float _thrustForce)
+    {
+        //TODO: Clean this up
+        
+        //Get the thrust acceleration by using the thrustForce stat and the ship mass. Allows for cargo to affect the thruster performance
+        float _thrust = _thrustForce / shipMass;
+        Rb.AddRelativeForce(new Vector3(0, _thrust, 0));
+        //For simplicity we cap the speed at maxspeed artificially - more complete speed handling is planned.   
+        if (currentSpeed > maxSpeed)
+        {
+            Vector3 _normVelocity = Rb.velocity.normalized;
+            Rb.velocity = _normVelocity * maxSpeed;
+        }
+        //Update the current speed
+        currentSpeed = Rb.velocity.magnitude;
+
+        
     }
     Vector3 TargetDeviation(Vector3 target, Vector3 deviationDir, float deviationMag)
     {
         
         Vector3 new_trgt;
-        //Set a small amount of deviation to a target
-        if ((transform.position - target).magnitude > 4*deviationMag)
+        //Set a ranged amount of deviation to a target
+        if ((transform.position - target).magnitude > deviationMag + 5f)
         {
             //While the AI is distant from target pos, calculate deviation on target
-            new_trgt = target + (4 * deviationDir);
+            new_trgt = target + ( deviationDir.normalized * deviationMag);
         }
         else
         {
             //As it gets closer, the heading gets accurate to ensure precise location arrival
             new_trgt = target;
             //Setting a new deviation here will not stutter the ships rotation as its not used this close
-            dvV = (Random.insideUnitCircle * deviationMag);
+            dvV = (Random.insideUnitCircle);
         }
 
         return new_trgt;
     }
-    Vector3 GetAdjustedTargetVector(Transform t, Vector3 desiredTarget, Vector3 currentVelocity)
-    {
-        
-        Vector3 _adjustedTargetVector = (desiredTarget - t.position) - currentVelocity;
-
-        return _adjustedTargetVector;
-    }
-    //Base Actions
-    void MoveToward(Vector3 _target)
-    {
-        Vector3 _moveTarget = TargetDeviation(_target, dvV, targetDeviation);
-        Debug.DrawLine(transform.position, _moveTarget, Color.red);
-        //Get the heading of the move
-        Vector3 _heading = GetAdjustedTargetVector(transform, _moveTarget, Rb.velocity);
-        //Debug.DrawLine(transform.position, _heading, Color.green);
-
-        //Calculate the rotation toward the heading per frame
-        float _singleStep = 5 * rotationSpeed * Time.deltaTime;
-        Vector3 _direction = Vector3.RotateTowards(transform.up, _heading, _singleStep, 0f);
-        //Zero out the direction as a precaution
-        _direction.z = 0;
-
-        //Course adjust logic
-        /*if(Vector3.Dot(Rb.velocity.normalized, _heading) < -0.9)
-        {
-            //If the velocity and heading are close to opposite adjust the course by a fraction of a single step to let the RotateToward function to work.
-            transform.Rotate(0, 0, _singleStep);
-        }
-        if (Vector3.Dot(Rb.velocity.normalized, _heading) < 0.7 && currentSpeed > 5)
-        {
-            //While moving faster than 5m/s and the velocity and the heading dont match
-            Vector3 calcDir; //New heading vector
-            if (Vector3.SignedAngle(Rb.velocity, _heading,Vector3.forward) > 10)
-            {
-                //If the difference in angle of the velocity and heading is a positive angle
-                //Course correct 90 degrees
-                calcDir = new Vector3(-_heading.y, _heading.x, 0);
-            }
-            else if(Vector3.SignedAngle(Rb.velocity, _heading, Vector3.forward) < -10)
-            {
-                //Course correct in the opposite direction when the angle is negative
-                calcDir = new Vector3(_heading.y, -_heading.x, 0);
-            }else
-            {
-                //If the angles are with 10/-10 continue with the original heading
-                calcDir = _heading;
-            }
-            
-            //If the heading is behind the Ship set a new heading for 180 degrees, only when the distance is 100m or more
-            if(180f - Vector3.Angle(Rb.velocity, _heading) < 3f || (Vector3.Distance(_target, transform.position) > 100f))
-            {
-                calcDir = new Vector3(-Rb.velocity.x, -Rb.velocity.y, 0f);
-                Debug.Log("Target distance is " + Vector3.Distance(_target, transform.position) + " " + Time.time );
-            }
-            //Calulate the new step rotation and apply it
-            Vector3 _adjDir = Vector3.RotateTowards(transform.up, calcDir, _singleStep, 0f);
-
-            transform.rotation = Quaternion.LookRotation(Vector3.forward, _adjDir);
-        }
-        else
-        {
-            //Use the original direction if the ship is already on target
-            transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
-        }*/
-        transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
-        //Get the thrust acceleration by using the thrustForce stat and the ship mass. Allows for cargo to affect the thruster performance
-        float _thrust = thrustForce / shipMass;
-        float d = Vector3.Distance(_target, transform.position);
-        //Rb.AddRelativeForce(new Vector3(0, _thrust, 0));
-        
-
-        if (d > 50f)
-        {
-            //Add thrust when further than 50m
-            Rb.AddRelativeForce(new Vector3(0, _thrust, 0));
-        }
-        else
-        {
-            if(d < 25)
-            {
-                //For simplicity its cleaner to just slow the ship down artificially at close proximity
-                //Although setting the velocity of a rigidbody isnt good practise
-                Vector3 _normVelocity = Rb.velocity.normalized;
-                Rb.velocity -= _normVelocity;
-            }
-            
-        }
-
-        //Again for simplicity we cap the speed at maxspeed artificially   
-        if (currentSpeed > maxSpeed)
-        {
-            Vector3 _normVelocity = Rb.velocity.normalized;
-            Rb.velocity = _normVelocity * maxSpeed;   
-        }
-        //Update the current speed
-        currentSpeed = Rb.velocity.magnitude;
- 
-    }
-    
 }
