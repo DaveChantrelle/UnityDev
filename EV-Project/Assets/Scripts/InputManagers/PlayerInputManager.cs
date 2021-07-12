@@ -11,9 +11,9 @@ public class PlayerInputManager : InputManager
         _throttleAxis = Input.GetAxis("Vertical");
         _rotationAxis = Input.GetAxis("Horizontal");
         _boost = Input.GetButton("Boost");
-        _primaryFire = Input.GetButtonDown("Fire1");
-        _secondaryFire = Input.GetButtonDown("Fire2");
-        _auxillaryFire = Input.GetButtonDown("Fire3");
+        _primaryFire = Input.GetButton("Fire1");
+        _secondaryFire = Input.GetButton("Fire2");
+        _auxillaryFire = Input.GetButton("Fire3");
         _open = Input.GetButtonDown("Open");
         _action = Input.GetButtonDown("Action");
         //Suit Controls

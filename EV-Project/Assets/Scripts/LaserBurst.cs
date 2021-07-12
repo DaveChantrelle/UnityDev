@@ -16,7 +16,7 @@ public class LaserBurst : Ammo
     IEnumerator ApplyVelocity()
     {
         yield return new WaitForEndOfFrame();
-        if (Impact != Vector3.zero)
+        if (Impact.magnitude != 0)
         {
             transform.position = Impact;
         }

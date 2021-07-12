@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 /// <summary>
-/// Handles player data and tarcks player state changes.
+/// Handles player data and tracks player state changes.
 /// </summary>
 public class Player : MonoBehaviour
 {
@@ -13,9 +13,5 @@ public class Player : MonoBehaviour
         Im = GetComponent<InputManager>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
 }

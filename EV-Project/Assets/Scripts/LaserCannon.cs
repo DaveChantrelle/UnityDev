@@ -9,8 +9,8 @@ public class LaserCannon : Weapon
     string weaponAmmo = "Laser Burst";
     float range = 200;
     int capacity = 1000;
-    float firerate = 10;
-    float damage = 300;
+    float firerate = 3;
+    float damage = 30;
     //Context Methods
     public override string GetWeaponName()
     {
@@ -35,6 +35,7 @@ public class LaserCannon : Weapon
             //force ammo to position / rotation of weapon
             a.transform.position = transform.position;
             a.transform.rotation = transform.rotation;
+            a.GetComponentInChildren<TrailRenderer>().startColor = new Color(1,0,0,0.1f);
             //Cast Ray to check hit on target
             if(Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out RaycastHit hit, Range))
             {
@@ -58,6 +59,7 @@ public class LaserCannon : Weapon
             }
             //Weapon has fired so deplete some ammo
             UpdateAmmoCount(-1);
+            _firedTime = t;
             return true;
         }else
         {

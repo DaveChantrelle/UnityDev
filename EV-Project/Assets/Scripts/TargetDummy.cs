@@ -5,7 +5,7 @@ using UnityEngine;
 public class TargetDummy : MonoBehaviour, IDamagable
 {
     GameObject _target;
-    float _health = 500;
+    float _health = 50;
     [SerializeField]
     float _speed = 30;
     float _targetOffset = 10;
@@ -28,8 +28,9 @@ public class TargetDummy : MonoBehaviour, IDamagable
     public void Damage(float _incomingDamage)
     {
         _health -= _incomingDamage;
-        transform.localScale *= 1.1f;
+        Transform t = GetComponent<MeshRenderer>().transform;
         GetComponent<MeshRenderer>().material.color = Color.red;
+        //t.localScale *= 1.1f;
         StartCoroutine(RegisterHitCoroutine());
     }
     public IEnumerator RegisterHitCoroutine()

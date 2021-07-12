@@ -24,15 +24,18 @@ public class AIInputManager : InputManager
     }
      public override bool PrimaryFire()
     {
-        throw new System.NotImplementedException();
+        return AI.PrimaryTrigger;
+        //throw new System.NotImplementedException();
     }
    public override bool SecondaryFire()
     {
-        throw new System.NotImplementedException();
+        return false;
+        //throw new System.NotImplementedException();
     }
     public override bool AuxillaryFire()
     {
-        throw new System.NotImplementedException();
+        return false;
+        //throw new System.NotImplementedException();
     }
     public override bool Pause()
     {
@@ -40,9 +43,9 @@ public class AIInputManager : InputManager
     }
 
     // Start is called before the first frame update
-    public void Start()
+    public void Awake()
     {
-        
+        AI = GetComponent<ShipAI>();
     }
 
     // Update is called once per frame

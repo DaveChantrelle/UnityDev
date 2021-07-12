@@ -10,7 +10,7 @@ using UnityEngine;
 /// - Target Orientated Rotation (feature)
 /// </summary>
 
-public class VehicleController : MonoBehaviour
+public class VehicleController : MonoBehaviour, IDamagable
 {
     Rigidbody Rb;
     ModuleManager Mm;
@@ -19,6 +19,8 @@ public class VehicleController : MonoBehaviour
     string VehicleName;
     string VehicleModel;
     float shipMass = 5f;
+    [SerializeField]
+    float _health = 1000;
     /*Movement Stats*/
     [SerializeField]
     float thrustForce = 100f;
@@ -55,6 +57,11 @@ public class VehicleController : MonoBehaviour
         ShipMovement();
         
         Debug.DrawRay(this.transform.position, Rb.velocity);
+        if (_health <= 0)
+        {
+            //Destroy(gameObject);
+            GetComponentInChildren<MeshRenderer>().material.color = Color.red;
+        }
     }
     void FixedUpdate()
     {
@@ -176,6 +183,19 @@ public class VehicleController : MonoBehaviour
     }
     //**END ShipMovement**//
     #endregion
+
+    //IDammagable
+    public void Damage(float _incomingDamage)
+    {
+        _health -= _incomingDamage;
+        Debug.Log("Player is Hit");
+        StartCoroutine(RegisterHitCoroutine());
+    }
+    public IEnumerator RegisterHitCoroutine()
+    {
+        yield return new WaitForSeconds(1);
+
+    }
 
 }
 

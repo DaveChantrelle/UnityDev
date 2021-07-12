@@ -27,12 +27,9 @@ public class TrainingDummyManager : MonoBehaviour
         }
         for(int i = 0; i < dummys.Length; i++)
         {
-            d = Instantiate(dummys[i], transform);
-            yield return new WaitForSeconds(1);
+            
             d = Instantiate(dummys[i], transform);
             yield return new WaitForSeconds(2);
-            d = Instantiate(dummys[i], transform);
-            yield return new WaitForSeconds(3);
             d = Instantiate(dummys[i], transform);
             yield return new WaitUntil(() => DisNull());
         }
